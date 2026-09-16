@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Troque para "mysql" se for usar MySQL (ajuste tambem a DATABASE_URL no .env)
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Receita {
+  id        Int      @id @default(autoincrement())
+  descricao String
+  valor     Float
+  categoria String
+  data      DateTime
+  criadoEm  DateTime @default(now())
+}
+
+model Despesa {
+  id        Int      @id @default(autoincrement())
+  descricao String
+  valor     Float
+  categoria String
+  data      DateTime
+  criadoEm  DateTime @default(now())
+}

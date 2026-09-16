@@ -1,0 +1,123 @@
+### Extensao recomendada: REST Client (VS Code)
+@url = http://localhost:3001
+
+### ---------- RECEITAS ----------
+
+### Listar todas as receitas (200)
+GET {{url}}/receitas
+
+### Listar receitas filtrando por categoria (200)
+GET {{url}}/receitas?categoria=Freelance
+
+### Buscar uma receita pelo id (200)
+GET {{url}}/receitas/1
+
+### Buscar receita inexistente (404)
+GET {{url}}/receitas/9999
+
+### Criar receita (201)
+POST {{url}}/receitas
+Content-Type: application/json
+
+{
+  "descricao": "Venda de monitor",
+  "valor": 450.00,
+  "categoria": "Vendas",
+  "data": "2026-09-15"
+}
+
+### Criar receita invalida (400 com campos)
+POST {{url}}/receitas
+Content-Type: application/json
+
+{
+  "descricao": "ab",
+  "valor": -10,
+  "categoria": "",
+  "data": "15/09/2026"
+}
+
+### Atualizar receita (200)
+PUT {{url}}/receitas/1
+Content-Type: application/json
+
+{
+  "descricao": "Salario de setembro (corrigido)",
+  "valor": 4350.00,
+  "categoria": "Salario",
+  "data": "2026-09-05"
+}
+
+### Atualizar receita inexistente (404)
+PUT {{url}}/receitas/9999
+Content-Type: application/json
+
+{
+  "descricao": "Qualquer coisa",
+  "valor": 100,
+  "categoria": "Outros",
+  "data": "2026-09-05"
+}
+
+### Remover receita (204)
+DELETE {{url}}/receitas/8
+
+### Remover receita inexistente (404)
+DELETE {{url}}/receitas/9999
+
+### ---------- DESPESAS ----------
+
+### Listar todas as despesas (200)
+GET {{url}}/despesas
+
+### Listar despesas filtrando por categoria (200)
+GET {{url}}/despesas?categoria=Moradia
+
+### Buscar uma despesa pelo id (200)
+GET {{url}}/despesas/1
+
+### Buscar despesa inexistente (404)
+GET {{url}}/despesas/9999
+
+### Criar despesa (201)
+POST {{url}}/despesas
+Content-Type: application/json
+
+{
+  "descricao": "Cafe da manha",
+  "valor": 22.50,
+  "categoria": "Alimentacao",
+  "data": "2026-09-15"
+}
+
+### Criar despesa invalida (400 com campos)
+POST {{url}}/despesas
+Content-Type: application/json
+
+{
+  "valor": "muito caro"
+}
+
+### Atualizar despesa (200)
+PUT {{url}}/despesas/2
+Content-Type: application/json
+
+{
+  "descricao": "Mercado do mes (ajustado)",
+  "valor": 812.30,
+  "categoria": "Alimentacao",
+  "data": "2026-09-06"
+}
+
+### Remover despesa (204)
+DELETE {{url}}/despesas/8
+
+### ---------- SALDO ----------
+
+### Totais e saldo (200)
+GET {{url}}/saldo
+
+### ---------- ROTA INEXISTENTE ----------
+
+### 404 de rota
+GET {{url}}/investimentos
