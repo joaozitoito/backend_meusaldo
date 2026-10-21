@@ -1,0 +1,19 @@
+CREATE TABLE "Receita" (
+  "id" SERIAL NOT NULL,
+  "descricao" TEXT NOT NULL,
+  "valor" DOUBLE PRECISION NOT NULL,
+  "categoria" TEXT NOT NULL,
+  "data" TIMESTAMP(3) NOT NULL,
+  "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Receita_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "Despesa" (
+  "id" SERIAL NOT NULL,
+  "descricao" TEXT NOT NULL,
+  "valor" DOUBLE PRECISION NOT NULL,
+  "categoria" TEXT NOT NULL,
+  "data" TIMESTAMP(3) NOT NULL,
+  "criadoEm" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Despesa_pkey" PRIMARY KEY ("id")
+);

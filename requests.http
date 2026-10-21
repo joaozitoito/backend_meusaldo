@@ -1,5 +1,41 @@
 ### Extensao recomendada: REST Client (VS Code)
 @url = http://localhost:3001
+@receitaId = 1
+@despesaId = 1
+
+### Defina REST_CLIENT_EMAIL e REST_CLIENT_SENHA apenas no .env local ignorado.
+### Mantenha o cookie jar do REST Client habilitado; execute login antes do CRUD.
+### Nao salve credenciais ou cookies neste arquivo. Use somente conta de teste propria.
+
+### Cadastro (201)
+POST {{url}}/auth/registro
+Content-Type: application/json
+X-MeuSaldo-Request: 1
+
+{
+  "nome": "Conta de demonstracao",
+  "email": "{{$dotenv REST_CLIENT_EMAIL}}",
+  "senha": "{{$dotenv REST_CLIENT_SENHA}}"
+}
+
+### Login (200 e Set-Cookie HttpOnly)
+POST {{url}}/auth/login
+Content-Type: application/json
+X-MeuSaldo-Request: 1
+
+{
+  "email": "{{$dotenv REST_CLIENT_EMAIL}}",
+  "senha": "{{$dotenv REST_CLIENT_SENHA}}"
+}
+
+### Sessao atual (200; 401 sem sessao)
+GET {{url}}/auth/me
+
+### Logout (204; revoga o token)
+POST {{url}}/auth/logout
+X-MeuSaldo-Request: 1
+
+### Use somente registros proprios de teste. Atualize os IDs com o retorno dos POSTs.
 
 ### ---------- RECEITAS ----------
 
@@ -10,7 +46,7 @@ GET {{url}}/receitas
 GET {{url}}/receitas?categoria=Freelance
 
 ### Buscar uma receita pelo id (200)
-GET {{url}}/receitas/1
+GET {{url}}/receitas/{{receitaId}}
 
 ### Buscar receita inexistente (404)
 GET {{url}}/receitas/9999
@@ -18,6 +54,7 @@ GET {{url}}/receitas/9999
 ### Criar receita (201)
 POST {{url}}/receitas
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "Venda de monitor",
@@ -29,6 +66,7 @@ Content-Type: application/json
 ### Criar receita invalida (400 com campos)
 POST {{url}}/receitas
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "ab",
@@ -38,8 +76,9 @@ Content-Type: application/json
 }
 
 ### Atualizar receita (200)
-PUT {{url}}/receitas/1
+PUT {{url}}/receitas/{{receitaId}}
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "Salario de setembro (corrigido)",
@@ -51,6 +90,7 @@ Content-Type: application/json
 ### Atualizar receita inexistente (404)
 PUT {{url}}/receitas/9999
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "Qualquer coisa",
@@ -60,10 +100,12 @@ Content-Type: application/json
 }
 
 ### Remover receita (204)
-DELETE {{url}}/receitas/8
+DELETE {{url}}/receitas/{{receitaId}}
+X-MeuSaldo-Request: 1
 
 ### Remover receita inexistente (404)
 DELETE {{url}}/receitas/9999
+X-MeuSaldo-Request: 1
 
 ### ---------- DESPESAS ----------
 
@@ -74,7 +116,7 @@ GET {{url}}/despesas
 GET {{url}}/despesas?categoria=Moradia
 
 ### Buscar uma despesa pelo id (200)
-GET {{url}}/despesas/1
+GET {{url}}/despesas/{{despesaId}}
 
 ### Buscar despesa inexistente (404)
 GET {{url}}/despesas/9999
@@ -82,6 +124,7 @@ GET {{url}}/despesas/9999
 ### Criar despesa (201)
 POST {{url}}/despesas
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "Cafe da manha",
@@ -93,14 +136,16 @@ Content-Type: application/json
 ### Criar despesa invalida (400 com campos)
 POST {{url}}/despesas
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "valor": "muito caro"
 }
 
 ### Atualizar despesa (200)
-PUT {{url}}/despesas/2
+PUT {{url}}/despesas/{{despesaId}}
 Content-Type: application/json
+X-MeuSaldo-Request: 1
 
 {
   "descricao": "Mercado do mes (ajustado)",
@@ -110,7 +155,8 @@ Content-Type: application/json
 }
 
 ### Remover despesa (204)
-DELETE {{url}}/despesas/8
+DELETE {{url}}/despesas/{{despesaId}}
+X-MeuSaldo-Request: 1
 
 ### ---------- SALDO ----------
 

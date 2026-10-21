@@ -23,23 +23,23 @@ const despesas = [
 ];
 
 /**
- * Popula o banco na inicializacao.
+ * Popula o banco somente pelo comando explicito de demonstracao.
  * So insere se as tabelas estiverem vazias, para nao duplicar a cada restart.
  */
-export async function popularBanco() {
-  const totalReceitas = await prisma.receita.count();
-  const totalDespesas = await prisma.despesa.count();
+export async function popularBanco(usuarioId: number) {
+  const totalReceitas = await prisma.receita.count({ where: { usuarioId } });
+  const totalDespesas = await prisma.despesa.count({ where: { usuarioId } });
 
   if (totalReceitas === 0) {
     await prisma.receita.createMany({
-      data: receitas.map((r) => ({ ...r, data: new Date(r.data) })),
+      data: receitas.map((r) => ({ ...r, usuarioId, data: new Date(r.data) })),
     });
     console.log(`Seed: ${receitas.length} receitas inseridas.`);
   }
 
   if (totalDespesas === 0) {
     await prisma.despesa.createMany({
-      data: despesas.map((d) => ({ ...d, data: new Date(d.data) })),
+      data: despesas.map((d) => ({ ...d, usuarioId, data: new Date(d.data) })),
     });
     console.log(`Seed: ${despesas.length} despesas inseridas.`);
   }

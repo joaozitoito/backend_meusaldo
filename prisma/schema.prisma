@@ -3,7 +3,6 @@ generator client {
 }
 
 datasource db {
-  // Troque para "mysql" se for usar MySQL (ajuste tambem a DATABASE_URL no .env)
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -11,17 +10,48 @@ datasource db {
 model Receita {
   id        Int      @id @default(autoincrement())
   descricao String
-  valor     Float
+  valor     Decimal  @db.Decimal(12, 2)
   categoria String
   data      DateTime
   criadoEm  DateTime @default(now())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([usuarioId, data, id])
 }
 
 model Despesa {
   id        Int      @id @default(autoincrement())
   descricao String
-  valor     Float
+  valor     Decimal  @db.Decimal(12, 2)
   categoria String
   data      DateTime
   criadoEm  DateTime @default(now())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([usuarioId, data, id])
+}
+
+model Usuario {
+  id           Int       @id @default(autoincrement())
+  nome         String
+  email        String    @unique
+  senhaHash    String
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  receitas     Receita[]
+  despesas     Despesa[]
+  sessoes      Sessao[]
+}
+
+model Sessao {
+  tokenHash String   @id
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  criadoEm  DateTime @default(now())
+  expiraEm  DateTime
+
+  @@index([usuarioId, expiraEm])
+  @@index([expiraEm])
 }

@@ -8,13 +8,19 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push"
+    "prisma:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "seed": "tsx src/seed-cli.ts",
+    "test": "npm run build && node --test tests/validacao.test.cjs tests/auth-validacao.test.cjs",
+    "test:integration": "npm run build && node --test tests/api.test.cjs tests/auth.test.cjs tests/migracao.test.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "argon2": "0.45.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^5.0.1"
+    "express": "^5.0.1",
+    "express-rate-limit": "8.7.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

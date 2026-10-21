@@ -19,7 +19,7 @@ type Resultado =
  */
 export function validarLancamento(body: unknown): Resultado {
   const campos: Campos = {};
-  const corpo = (body ?? {}) as Record<string, unknown>;
+  const corpo = (typeof body === "object" && body !== null && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
 
   const descricao = corpo.descricao;
   const valor = corpo.valor;
@@ -32,17 +32,23 @@ export function validarLancamento(body: unknown): Resultado {
     campos.descricao = "A descricao deve ter no maximo 100 caracteres.";
   }
 
-  if (typeof valor !== "number" || Number.isNaN(valor)) {
-    campos.valor = "O valor e obrigatorio e deve ser um numero.";
+  if (typeof valor !== "number" || !Number.isFinite(valor)) {
+    campos.valor = "Informe um valor numérico finito.";
   } else if (valor <= 0) {
     campos.valor = "O valor deve ser maior que zero.";
+  } else if (valor > 9_999_999_999.99 || !/^\d+(\.\d{1,2})?$/.test(String(valor))) {
+    campos.valor = "Use até duas casas decimais e no máximo R$ 9.999.999.999,99.";
   }
 
   if (typeof categoria !== "string" || categoria.trim() === "") {
     campos.categoria = "A categoria e obrigatoria.";
+  } else if (categoria.trim().length > 60) {
+    campos.categoria = "A categoria deve ter no máximo 60 caracteres.";
   }
 
-  if (typeof data !== "string" || Number.isNaN(Date.parse(data))) {
+  const dia = typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data) && !data.startsWith("0000-")
+    ? new Date(`${data}T00:00:00.000Z`) : new Date(NaN);
+  if (Number.isNaN(dia.getTime()) || dia.toISOString().slice(0, 10) !== data) {
     campos.data = "A data e obrigatoria e deve estar no formato YYYY-MM-DD.";
   }
 
@@ -56,7 +62,7 @@ export function validarLancamento(body: unknown): Resultado {
       descricao: (descricao as string).trim(),
       valor: valor as number,
       categoria: (categoria as string).trim(),
-      data: new Date(data as string),
+      data: dia,
     },
   };
 }
@@ -64,6 +70,6 @@ export function validarLancamento(body: unknown): Resultado {
 /** Converte o parametro :id em numero. Retorna null quando invalido. */
 export function validarId(param: string): number | null {
   const id = Number(param);
-  if (!Number.isInteger(id) || id <= 0) return null;
+  if (!/^[1-9]\d*$/.test(param) || !Number.isSafeInteger(id) || id > 2_147_483_647) return null;
   return id;
 }
