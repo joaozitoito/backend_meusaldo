@@ -13,7 +13,7 @@ rotasDespesas.get("/", async (req, res) => {
     return;
   }
   const registros = await prisma.despesa.findMany({
-    where: { usuarioId: req.usuario!.id, ...(typeof categoria === "string" ? { categoria } : {}), ...(data ? { data } : {}) },
+    where: { usuarioId: req.donoId!, ...(typeof categoria === "string" ? { categoria } : {}), ...(data ? { data } : {}) },
     orderBy: [{ data: "desc" }, { id: "desc" }],
   });
   res.status(200).json(registros.map(serializarLancamento));
@@ -25,7 +25,7 @@ rotasDespesas.get("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: { id: "O id deve ser um numero inteiro positivo." } });
     return;
   }
-  const registro = await prisma.despesa.findFirst({ where: { id, usuarioId: req.usuario!.id } });
+  const registro = await prisma.despesa.findFirst({ where: { id, usuarioId: req.donoId! } });
   if (!registro) {
     res.status(404).json({ erro: "Despesa nao encontrada." });
     return;
@@ -39,7 +39,7 @@ rotasDespesas.post("/", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.despesa.create({ data: { ...resultado.dados, usuarioId: req.usuario!.id } });
+  const registro = await prisma.despesa.create({ data: { ...resultado.dados, usuarioId: req.donoId! } });
   res.status(201).json(serializarLancamento(registro));
 });
 
@@ -54,7 +54,7 @@ rotasDespesas.put("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.despesa.update({ where: { id, usuarioId: req.usuario!.id }, data: resultado.dados });
+  const registro = await prisma.despesa.update({ where: { id, usuarioId: req.donoId! }, data: resultado.dados });
   res.status(200).json(serializarLancamento(registro));
 });
 
@@ -64,6 +64,6 @@ rotasDespesas.delete("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: { id: "O id deve ser um numero inteiro positivo." } });
     return;
   }
-  await prisma.despesa.delete({ where: { id, usuarioId: req.usuario!.id } });
+  await prisma.despesa.delete({ where: { id, usuarioId: req.donoId! } });
   res.status(204).send();
 });

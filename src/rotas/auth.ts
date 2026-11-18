@@ -6,6 +6,7 @@ import { prisma } from "../prisma";
 import { validarCadastro, validarLogin } from "../auth/validacao";
 import { conferirSenha, hashSenha } from "../auth/senha";
 import { abrirSessao, exigirSessao, limparCookie, selecionarUsuario } from "../auth/sessao";
+import { encerrarEventos } from "../tempo-real";
 
 export const rotasAuth = Router();
 // A conta inexistente também executa verificação de hash para reduzir diferenças de tempo.
@@ -60,6 +61,7 @@ rotasAuth.get("/me", exigirSessao, (req, res) => {
 
 rotasAuth.post("/logout", exigirSessao, async (req, res) => {
   await prisma.sessao.deleteMany({ where: { tokenHash: req.sessaoHash! } });
+  encerrarEventos(cliente => cliente.sessaoHash === req.sessaoHash);
   limparCookie(res);
   res.status(204).send();
 });

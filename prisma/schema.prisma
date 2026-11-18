@@ -15,7 +15,7 @@ model Receita {
   data      DateTime
   criadoEm  DateTime @default(now())
   usuarioId Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([usuarioId, data, id])
 }
@@ -28,23 +28,31 @@ model Despesa {
   data      DateTime
   criadoEm  DateTime @default(now())
   usuarioId Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([usuarioId, data, id])
 }
 
 model Usuario {
-  id           Int       @id @default(autoincrement())
-  nome         String
-  email        String    @unique
-  senhaHash    String
-  criadoEm     DateTime  @default(now())
-  atualizadoEm DateTime  @updatedAt
-  receitas     Receita[]
-  despesas     Despesa[]
-  contas       Conta[]
-  orcamentos   Orcamento[]
-  sessoes      Sessao[]
+  id              Int         @id @default(autoincrement())
+  nome            String
+  email           String      @unique
+  senhaHash       String
+  criadoEm        DateTime    @default(now())
+  atualizadoEm    DateTime    @updatedAt
+  receitas        Receita[]
+  despesas        Despesa[]
+  contas          Conta[]
+  orcamentos      Orcamento[]
+  sessoes         Sessao[]
+  // Conta conjunta: o membro opera sobre os dados do titular (no máximo um membro por titular).
+  titularId       Int?
+  titular         Usuario?    @relation("Conjunta", fields: [titularId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  membros         Usuario[]   @relation("Conjunta")
+  conviteHash     String?     @unique
+  conviteExpiraEm DateTime?
+
+  @@index([titularId])
 }
 
 model Sessao {

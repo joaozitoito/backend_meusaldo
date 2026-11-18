@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate deploy",
     "seed": "tsx src/seed-cli.ts",
     "test": "npm run build && node --test tests/validacao.test.cjs tests/auth-validacao.test.cjs",
-    "test:integration": "npm run build && node --test tests/api.test.cjs tests/auth.test.cjs tests/migracao.test.cjs"
+    "test:integration": "npm run build && node --test tests/api.test.cjs tests/auth.test.cjs tests/migracao.test.cjs tests/conjunta.test.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

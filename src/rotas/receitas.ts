@@ -13,7 +13,7 @@ rotasReceitas.get("/", async (req, res) => {
     return;
   }
   const registros = await prisma.receita.findMany({
-    where: { usuarioId: req.usuario!.id, ...(typeof categoria === "string" ? { categoria } : {}), ...(data ? { data } : {}) },
+    where: { usuarioId: req.donoId!, ...(typeof categoria === "string" ? { categoria } : {}), ...(data ? { data } : {}) },
     orderBy: [{ data: "desc" }, { id: "desc" }],
   });
   res.status(200).json(registros.map(serializarLancamento));
@@ -25,7 +25,7 @@ rotasReceitas.get("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: { id: "O id deve ser um numero inteiro positivo." } });
     return;
   }
-  const registro = await prisma.receita.findFirst({ where: { id, usuarioId: req.usuario!.id } });
+  const registro = await prisma.receita.findFirst({ where: { id, usuarioId: req.donoId! } });
   if (!registro) {
     res.status(404).json({ erro: "Receita nao encontrada." });
     return;
@@ -39,7 +39,7 @@ rotasReceitas.post("/", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.receita.create({ data: { ...resultado.dados, usuarioId: req.usuario!.id } });
+  const registro = await prisma.receita.create({ data: { ...resultado.dados, usuarioId: req.donoId! } });
   res.status(201).json(serializarLancamento(registro));
 });
 
@@ -54,7 +54,7 @@ rotasReceitas.put("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.receita.update({ where: { id, usuarioId: req.usuario!.id }, data: resultado.dados });
+  const registro = await prisma.receita.update({ where: { id, usuarioId: req.donoId! }, data: resultado.dados });
   res.status(200).json(serializarLancamento(registro));
 });
 
@@ -64,6 +64,6 @@ rotasReceitas.delete("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: { id: "O id deve ser um numero inteiro positivo." } });
     return;
   }
-  await prisma.receita.delete({ where: { id, usuarioId: req.usuario!.id } });
+  await prisma.receita.delete({ where: { id, usuarioId: req.donoId! } });
   res.status(204).send();
 });

@@ -82,7 +82,10 @@ pelo Compose do frontend: veja
 - `202610210003_usuarios_sessoes`: cria Usuario/Sessao e propriedade obrigatória
   dos lançamentos, com FKs e índices. Recusa transacionalmente qualquer receita
   ou despesa antiga sem dono, sem alterar ou atribuir esses dados.
-- Banco novo: `npm run db:migrate` aplica as três.
+- `202611180003_conta_conjunta`: adiciona em Usuario `titularId` (FK para o próprio
+  Usuario, `SET NULL` ao remover o titular, sem apontar para si), `conviteHash` único e
+  `conviteExpiraEm`. Só colunas opcionais: nenhum dado existente muda.
+- Banco novo: `npm run db:migrate` aplica todas.
 - Na base local inspecionada havia 0 receitas e 0 despesas antes desta última
   migração. Se outra base tiver registros antigos, interromper e planejar sua
   vinculação com autorização do responsável. Não associar ao primeiro cadastro.
@@ -120,6 +123,27 @@ inexistente. usuarioId/userId do cliente não autorizam nem reatribuem registros
 | GET, PUT, DELETE | /contas/:id | 200; 200; 204 |
 | POST | /contas/:id/pagar | 200 `{ conta, despesa }`; 409 se já paga |
 | GET, PUT | /orcamentos?mes=YYYY-MM | 200 `{ mes, limite, gasto, categorias: [{ categoria, limite, gasto }] }` |
+| GET | /conjunta | 200 `{ papel: "individual" \| "titular" \| "membro", parceiro, conviteExpiraEm }` |
+| POST | /conjunta/convite | 201 `{ codigo, conviteExpiraEm }`; 409 se já vinculado |
+| POST | /conjunta/entrar | 200 (estado); 400, 404 (inválido/expirado), 409, 429 |
+| POST | /conjunta/sair | 204; 409 se não está em conta conjunta |
+| GET | /eventos | 200 `text/event-stream` |
+
+**Conta conjunta.** O dono dos dados é `titularId ?? id` do usuário da sessão; todas as
+rotas acima operam sobre esse dono. `POST /conjunta/convite` devolve uma vez um código de
+10 caracteres (sem 0/O/1/I), de uso único e válido por 24h; só o hash SHA-256 fica no banco
+e um novo código substitui o anterior. `POST /conjunta/entrar` recebe `{ "codigo": "..." }`
+(aceita minúsculas, espaços e hífens), tem limite de 10 falhas por 15 minutos e roda em
+transação Serializable: no máximo duas pessoas, sem cadeia de vínculos. Quem tem vínculo
+não gera convite nem entra em outro. `POST /conjunta/sair` encerra pelos dois lados; o que
+foi criado junto continua com o titular, e o membro volta aos próprios dados.
+
+**Tempo real.** `GET /eventos` (Server-Sent Events) envia
+`data: { "tipo": "dados", "recurso": "despesas", "autor": { "id", "nome" } }` a todos que veem
+o mesmo dono após POST/PUT/DELETE bem-sucedido em /receitas, /despesas, /contas e
+/orcamentos, e `tipo: "conjunta"` quando o vínculo muda (o stream é então fechado para o
+navegador reconectar no dono novo). O stream fecha quando a sessão expira ou no logout.
+Os assinantes ficam em memória: vale para uma única instância da API.
 
 GET das listagens aceita `?categoria=` para correspondência exata. Listagens e
 `GET /saldo` aceitam `?mes=YYYY-MM` (dias civis UTC do mês; formato inválido retorna 400
@@ -212,7 +236,8 @@ npm test
 npm run build
 ```
 
-Nove testes unitários cobrem validação financeira/autenticação e Argon2id. Não exigem banco.
+Doze testes unitários cobrem validação financeira/autenticação e Argon2id. Não exigem banco.
+Os integrados incluem `conjunta.test.cjs`: vínculo, isolamento, regras do convite e eventos SSE.
 O backend não tem script de lint; não há aprovação de lint a declarar.
 
 Para os testes integrados, criar previamente um banco **exclusivo**, com nome

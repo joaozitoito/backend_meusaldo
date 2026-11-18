@@ -10,6 +10,8 @@ import { rotasOrcamentos } from "./rotas/orcamentos";
 import { rotasAuth } from "./rotas/auth";
 import { exigirSessao } from "./auth/sessao";
 import { protegerCsrf } from "./auth/csrf";
+import { rotasConjunta } from "./rotas/conjunta";
+import { avisarAlteracao, conectarEventos } from "./tempo-real";
 
 export const app = express();
 app.disable("x-powered-by");
@@ -26,8 +28,11 @@ if (!origensFrontend.length || origensFrontend.some(origem => {
 app.use(cors({ origin: origensFrontend, credentials: true, allowedHeaders: ["Content-Type", "X-MeuSaldo-Request"], methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] }));
 app.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
 app.get("/health", (_req, res) => { res.json({ ok: true }); });
-app.use(["/receitas", "/despesas", "/saldo", "/contas", "/orcamentos"], exigirSessao);
+app.use(["/receitas", "/despesas", "/saldo", "/contas", "/orcamentos", "/conjunta", "/eventos"], exigirSessao);
 app.use(protegerCsrf(origensFrontend));
+// Fora do delayGet: o stream fica aberto e não deve esperar.
+app.get("/eventos", conectarEventos);
+app.use(["/receitas", "/despesas", "/contas", "/orcamentos"], avisarAlteracao);
 app.use(express.json({ limit: "16kb" }));
 
 // Atraso de 400ms apenas nos GET.
@@ -39,6 +44,7 @@ app.use("/despesas", rotasDespesas);
 app.use("/saldo", rotasSaldo);
 app.use("/contas", rotasContas);
 app.use("/orcamentos", rotasOrcamentos);
+app.use("/conjunta", rotasConjunta);
 
 app.use(rotaNaoEncontrada);
 app.use(tratarErro);
