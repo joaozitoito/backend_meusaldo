@@ -39,6 +39,7 @@ async function limpar(servidor, usuarios) {
     await prisma.receita.deleteMany({ where: { usuarioId: { in: usuarios } } });
     await prisma.despesa.deleteMany({ where: { usuarioId: { in: usuarios } } });
     await prisma.conta.deleteMany({ where: { usuarioId: { in: usuarios } } });
+    await prisma.orcamento.deleteMany({ where: { usuarioId: { in: usuarios } } });
     await prisma.usuario.deleteMany({ where: { id: { in: usuarios } } });
   } finally {
     await prisma.$disconnect();

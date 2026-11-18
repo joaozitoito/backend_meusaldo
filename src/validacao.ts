@@ -32,13 +32,8 @@ export function validarLancamento(body: unknown): Resultado {
     campos.descricao = "A descricao deve ter no maximo 100 caracteres.";
   }
 
-  if (typeof valor !== "number" || !Number.isFinite(valor)) {
-    campos.valor = "Informe um valor numérico finito.";
-  } else if (valor <= 0) {
-    campos.valor = "O valor deve ser maior que zero.";
-  } else if (valor > 9_999_999_999.99 || !/^\d+(\.\d{1,2})?$/.test(String(valor))) {
-    campos.valor = "Use até duas casas decimais e no máximo R$ 9.999.999.999,99.";
-  }
+  const erro = erroValor(valor);
+  if (erro) campos.valor = erro;
 
   if (typeof categoria !== "string" || categoria.trim() === "") {
     campos.categoria = "A categoria e obrigatoria.";
@@ -106,4 +101,35 @@ export function validarId(param: string): number | null {
   const id = Number(param);
   if (!/^[1-9]\d*$/.test(param) || !Number.isSafeInteger(id) || id > 2_147_483_647) return null;
   return id;
+}
+
+/** Valor monetario positivo com ate 2 casas. Retorna a mensagem de erro ou undefined. */
+function erroValor(valor: unknown): string | undefined {
+  if (typeof valor !== "number" || !Number.isFinite(valor)) return "Informe um valor numérico finito.";
+  if (valor <= 0) return "O valor deve ser maior que zero.";
+  if (valor > 9_999_999_999.99 || !/^\d+(\.\d{1,2})?$/.test(String(valor))) return "Use até duas casas decimais e no máximo R$ 9.999.999.999,99.";
+}
+
+export type Orcamento = { categoria: string; limite: number };
+
+/**
+ * Valida o corpo de PUT /orcamentos: { categorias: [{ categoria, limite }] }.
+ * A lista substitui os limites do mes; erros vem como "categorias.N.campo".
+ */
+export function validarOrcamentos(body: unknown): { ok: true; dados: Orcamento[] } | { ok: false; campos: Campos } {
+  const lista = typeof body === "object" && body !== null ? (body as Record<string, unknown>).categorias : undefined;
+  if (!Array.isArray(lista) || lista.length > 50) return { ok: false, campos: { categorias: "Envie uma lista com no maximo 50 categorias." } };
+  const campos: Campos = {};
+  const vistas = new Set<string>();
+  const dados = lista.map((item, indice) => {
+    const { categoria, limite } = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
+    const nome = typeof categoria === "string" ? categoria.trim() : "";
+    if (!nome || nome.length > 60) campos[`categorias.${indice}.categoria`] = "A categoria e obrigatoria e deve ter no maximo 60 caracteres.";
+    else if (vistas.has(nome.toLowerCase())) campos[`categorias.${indice}.categoria`] = "Categoria repetida.";
+    vistas.add(nome.toLowerCase());
+    const erro = erroValor(limite);
+    if (erro) campos[`categorias.${indice}.limite`] = erro;
+    return { categoria: nome, limite: limite as number };
+  });
+  return Object.keys(campos).length ? { ok: false, campos } : { ok: true, dados };
 }

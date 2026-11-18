@@ -21,6 +21,7 @@ test('todas as rotas financeiras recusam acesso anônimo com 401 e no-store', as
   }
   assert.equal((await chamar(base,'/saldo')).status,401);
   assert.equal((await chamar(base,'/contas/1/pagar',{method:'POST',csrf:false})).status,401);
+  for (const method of ['GET','PUT']) assert.equal((await chamar(base,'/orcamentos?mes=2026-12',{method,csrf:false})).status,401);
   assert.equal((await chamar(base,'/auth/me')).status,401);
 });
 
