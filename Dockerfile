@@ -22,7 +22,12 @@ RUN npm run build
 # prod: só dependências de produção, JS compilado e client Prisma gerado, sem root.
 FROM base AS prod
 ENV NODE_ENV=production
-RUN npm ci --omit=dev && npm cache clean --force
+# @prisma/client traz o CLI do Prisma, typescript e effect como peers, e o postinstall baixa
+# engines de migração: nada disso roda em produção (o client já vem gerado do build).
+RUN npm ci --omit=dev --ignore-scripts \
+ && rm -rf node_modules/prisma node_modules/typescript node_modules/effect \
+ && find node_modules/@prisma -mindepth 1 -maxdepth 1 ! -name client -exec rm -rf {} + \
+ && npm cache clean --force
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 USER node
