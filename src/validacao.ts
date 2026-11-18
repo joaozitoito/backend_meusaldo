@@ -67,6 +67,21 @@ export function validarLancamento(body: unknown): Resultado {
   };
 }
 
+export const ERRO_MES = { erro: "Dados invalidos.", campos: { mes: "Use o mes no formato YYYY-MM." } };
+
+/**
+ * Converte ?mes=YYYY-MM no intervalo UTC [gte, lt).
+ * Retorna undefined quando ausente e null quando invalido.
+ */
+export function lerMes(valor: unknown): { gte: Date; lt: Date } | null | undefined {
+  if (valor === undefined) return undefined;
+  if (typeof valor !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(valor) || valor.startsWith("0000-")) return null;
+  const gte = new Date(`${valor}-01T00:00:00.000Z`);
+  const lt = new Date(gte);
+  lt.setUTCMonth(lt.getUTCMonth() + 1);
+  return { gte, lt };
+}
+
 /** Converte o parametro :id em numero. Retorna null quando invalido. */
 export function validarId(param: string): number | null {
   const id = Number(param);

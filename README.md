@@ -110,8 +110,12 @@ inexistente. usuarioId/userId do cliente não autorizam nem reatribuem registros
 | PUT | /receitas/:id, /despesas/:id | 200 |
 | DELETE | /receitas/:id, /despesas/:id | 204, sem corpo |
 | GET | /saldo | 200 |
+| GET | /saldo/mensal | 200; `[{ mes, receitas, despesas, saldo, saldoAcumulado }]` do mais antigo ao mais novo |
 
-GET das listagens aceita `?categoria=` para correspondência exata.
+GET das listagens aceita `?categoria=` para correspondência exata. Listagens e
+`GET /saldo` aceitam `?mes=YYYY-MM` (dias civis UTC do mês; formato inválido retorna 400
+com `campos.mes`). `GET /saldo/mensal` aceita `?meses=` (1 a 24, padrão 12) e
+`?ate=YYYY-MM` (padrão: mês UTC atual); `saldoAcumulado` inclui tudo até o fim de cada mês.
 JSON de POST/PUT:
 
 ```json

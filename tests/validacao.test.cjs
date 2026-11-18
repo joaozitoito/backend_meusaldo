@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { validarLancamento, validarId } = require('../dist/validacao');
+const { validarLancamento, validarId, lerMes } = require('../dist/validacao');
 
 const valido = { descricao: 'Pagamento', valor: 1.1, categoria: 'Trabalho', data: '2026-10-21' };
 
@@ -39,4 +39,12 @@ test('rejeita corpo inválido, descrição curta/longa e categoria vazia/longa',
 test('ids devem ser inteiros positivos seguros em notação decimal', () => {
   for (const id of ['0', '-1', '1.2', '1e2', '9007199254740993', 'abc', '']) assert.equal(validarId(id), null, id);
   assert.equal(validarId('12'), 12);
+});
+
+test('mês YYYY-MM vira intervalo UTC [início, próximo mês); ausente e inválido são distintos', () => {
+  const dezembro = lerMes('2026-12');
+  assert.equal(dezembro.gte.toISOString(), '2026-12-01T00:00:00.000Z');
+  assert.equal(dezembro.lt.toISOString(), '2027-01-01T00:00:00.000Z');
+  assert.equal(lerMes(undefined), undefined);
+  for (const mes of ['2026-13', '2026-00', '2026-1', '0000-01', '2026-12-01', ['2026-12'], '']) assert.equal(lerMes(mes), null, String(mes));
 });

@@ -1,14 +1,19 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
-import { validarId, validarLancamento } from "../validacao";
+import { ERRO_MES, lerMes, validarId, validarLancamento } from "../validacao";
 import { serializarLancamento } from "../financeiro";
 
 export const rotasReceitas = Router();
 
 rotasReceitas.get("/", async (req, res) => {
   const categoria = req.query.categoria;
+  const data = lerMes(req.query.mes);
+  if (data === null) {
+    res.status(400).json(ERRO_MES);
+    return;
+  }
   const registros = await prisma.receita.findMany({
-    where: { usuarioId: req.usuario!.id, ...(typeof categoria === "string" ? { categoria } : {}) },
+    where: { usuarioId: req.usuario!.id, ...(typeof categoria === "string" ? { categoria } : {}), ...(data ? { data } : {}) },
     orderBy: [{ data: "desc" }, { id: "desc" }],
   });
   res.status(200).json(registros.map(serializarLancamento));
