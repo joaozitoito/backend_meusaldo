@@ -67,6 +67,26 @@ test('saldo: centavos exatos, alterações, saldo negativo e exclusão dos últi
   assert.deepEqual((await chamar('/saldo')).dados, inicial);
 });
 
+test('saldo e listagens por mês e histórico mensal acumulado', async () => {
+  const conta = await criarConta(base, usuarios);
+  const chamarConta = (caminho, method = 'GET', dados) => chamarAutenticado(base, caminho, { method, dados, cookie: conta.cookie });
+  for (const [tipo, valor, data] of [['receitas', 100.1, '2026-10-31'], ['despesas', 0.1, '2026-11-01'], ['receitas', 50, '2026-11-30'], ['despesas', 20, '2026-12-01']]) {
+    assert.equal((await chamarConta(`/${tipo}`, 'POST', { descricao: 'Por mes', valor, categoria, data })).status, 201);
+  }
+  assert.deepEqual((await chamarConta('/saldo?mes=2026-11')).dados, { totalReceitas: 50, totalDespesas: 0.1, saldo: 49.9 });
+  assert.deepEqual((await chamarConta('/despesas?mes=2026-11')).dados.map(item => item.valor), [0.1]);
+  assert.equal((await chamarConta('/receitas?mes=2026-11')).dados.length, 1);
+  assert.equal((await chamarConta('/saldo?mes=2026-13')).status, 400);
+  assert.equal((await chamarConta('/receitas?mes=nov')).dados.campos.mes !== undefined, true);
+  const mensal = await chamarConta('/saldo/mensal?meses=2&ate=2026-11');
+  assert.deepEqual(mensal.dados, [
+    { mes: '2026-10', receitas: 100.1, despesas: 0, saldo: 100.1, saldoAcumulado: 100.1 },
+    { mes: '2026-11', receitas: 50, despesas: 0.1, saldo: 49.9, saldoAcumulado: 150 },
+  ]);
+  assert.equal((await chamarConta('/saldo/mensal?meses=1&ate=2026-12')).dados[0].saldoAcumulado, 130);
+  for (const consulta of ['meses=0', 'meses=25', 'meses=1.5', 'ate=2026-13']) assert.equal((await chamarConta(`/saldo/mensal?${consulta}`)).status, 400, consulta);
+});
+
 test('CORS permite frontend e recusa origem desconhecida; JSON inválido retorna 400', async () => {
   for (const origem of ['http://localhost:3000', 'https://invalida.example']) {
     const resposta = await fetch(base + '/receitas', { method: 'OPTIONS', headers: { Origin: origem, 'Access-Control-Request-Method': 'POST' } });

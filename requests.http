@@ -163,6 +163,18 @@ X-MeuSaldo-Request: 1
 ### Totais e saldo (200)
 GET {{url}}/saldo
 
+### Totais de um mês (200)
+GET {{url}}/saldo?mes=2026-10
+
+### Despesas de um mês (200)
+GET {{url}}/despesas?mes=2026-10
+
+### Histórico mensal acumulado (200)
+GET {{url}}/saldo/mensal?meses=12&ate=2026-10
+
+### Mês inválido (400)
+GET {{url}}/saldo?mes=2026-13
+
 ### ---------- ROTA INEXISTENTE ----------
 
 ### 404 de rota
