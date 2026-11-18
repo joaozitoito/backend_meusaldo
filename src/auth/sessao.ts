@@ -39,14 +39,16 @@ export async function abrirSessao(req: Request, res: Response, usuario: UsuarioP
 export const exigirSessao: RequestHandler = async (req, res, next) => {
   const token = lerToken(req);
   const sessao = token ? await prisma.sessao.findUnique({
-    where: { tokenHash: hashToken(token) }, include: { usuario: { select: selecionarUsuario } },
+    where: { tokenHash: hashToken(token) }, include: { usuario: { select: { ...selecionarUsuario, titularId: true } } },
   }) : null;
   if (!sessao || sessao.expiraEm.getTime() <= Date.now()) {
     // Um 401 atrasado não deve apagar o cookie criado por um login mais recente.
     res.status(401).json({ erro: "Sessão ausente, expirada ou inválida. Entre novamente." });
     return;
   }
-  req.usuario = sessao.usuario;
+  const { titularId, ...usuario } = sessao.usuario;
+  req.usuario = usuario;
+  req.donoId = titularId ?? usuario.id;
   req.sessaoHash = sessao.tokenHash;
   req.sessaoExpiraEm = sessao.expiraEm;
   next();

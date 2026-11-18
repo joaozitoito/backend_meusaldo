@@ -26,7 +26,7 @@ rotasContas.get("/", async (req, res) => {
   }
   const registros = await prisma.conta.findMany({
     where: {
-      usuarioId: req.usuario!.id,
+      usuarioId: req.donoId!,
       ...(status ? { pagaEm: status === "paga" ? { not: null } : null } : {}),
       ...(mes || ate ? { vencimento: { ...mes, ...(ate ? { lte: ate } : {}) } } : {}),
     },
@@ -41,7 +41,7 @@ rotasContas.get("/:id", async (req, res) => {
     res.status(400).json(ERRO_ID);
     return;
   }
-  const registro = await prisma.conta.findFirst({ where: { id, usuarioId: req.usuario!.id } });
+  const registro = await prisma.conta.findFirst({ where: { id, usuarioId: req.donoId! } });
   if (!registro) {
     res.status(404).json({ erro: "Conta nao encontrada." });
     return;
@@ -55,7 +55,7 @@ rotasContas.post("/", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.conta.create({ data: { ...resultado.dados, usuarioId: req.usuario!.id } });
+  const registro = await prisma.conta.create({ data: { ...resultado.dados, usuarioId: req.donoId! } });
   res.status(201).json(serializarLancamento(registro));
 });
 
@@ -70,7 +70,7 @@ rotasContas.put("/:id", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const registro = await prisma.conta.update({ where: { id, usuarioId: req.usuario!.id }, data: resultado.dados });
+  const registro = await prisma.conta.update({ where: { id, usuarioId: req.donoId! }, data: resultado.dados });
   res.status(200).json(serializarLancamento(registro));
 });
 
@@ -80,7 +80,7 @@ rotasContas.delete("/:id", async (req, res) => {
     res.status(400).json(ERRO_ID);
     return;
   }
-  await prisma.conta.delete({ where: { id, usuarioId: req.usuario!.id } });
+  await prisma.conta.delete({ where: { id, usuarioId: req.donoId! } });
   res.status(204).send();
 });
 
@@ -91,7 +91,7 @@ rotasContas.post("/:id/pagar", async (req, res) => {
     res.status(400).json(ERRO_ID);
     return;
   }
-  const usuarioId = req.usuario!.id;
+  const usuarioId = req.donoId!;
   const resultado = await prisma.$transaction(async banco => {
     const agora = new Date();
     // O filtro pagaEm: null torna a marcação atômica: dois cliques simultâneos não geram duas despesas.

@@ -12,7 +12,7 @@ rotasSaldo.get("/", async (req, res) => {
     res.status(400).json(ERRO_MES);
     return;
   }
-  const where = { usuarioId: req.usuario!.id, ...(data ? { data } : {}) };
+  const where = { usuarioId: req.donoId!, ...(data ? { data } : {}) };
   const [receitas, despesas] = await prisma.$transaction([
     prisma.receita.aggregate({ where, _sum: { valor: true } }),
     prisma.despesa.aggregate({ where, _sum: { valor: true } }),
@@ -42,7 +42,7 @@ rotasSaldo.get("/mensal", async (req, res) => {
   }
   const inicio = new Date(ate.gte);
   inicio.setUTCMonth(inicio.getUTCMonth() - meses + 1);
-  const usuarioId = req.usuario!.id;
+  const usuarioId = req.donoId!;
   const antes = { usuarioId, data: { lt: inicio } };
   const periodo = { where: { usuarioId, data: { gte: inicio, lt: ate.lt } }, select: { valor: true, data: true } };
 

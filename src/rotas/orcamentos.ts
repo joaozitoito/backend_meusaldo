@@ -36,7 +36,7 @@ rotasOrcamentos.get("/", async (req, res) => {
     res.status(400).json(ERRO_MES);
     return;
   }
-  res.status(200).json(await resumo(req.usuario!.id, periodo.mes, periodo.data));
+  res.status(200).json(await resumo(req.donoId!, periodo.mes, periodo.data));
 });
 
 // PUT /orcamentos?mes=YYYY-MM com { categorias: [{ categoria, limite }] } substitui todos os limites do mes.
@@ -51,7 +51,7 @@ rotasOrcamentos.put("/", async (req, res) => {
     res.status(400).json({ erro: "Dados invalidos.", campos: resultado.campos });
     return;
   }
-  const usuarioId = req.usuario!.id;
+  const usuarioId = req.donoId!;
   await prisma.$transaction([
     prisma.orcamento.deleteMany({ where: { usuarioId, mes: periodo.mes } }),
     prisma.orcamento.createMany({ data: resultado.dados.map(item => ({ ...item, mes: periodo.mes, usuarioId })) }),
