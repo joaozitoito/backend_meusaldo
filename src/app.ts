@@ -25,6 +25,7 @@ if (!origensFrontend.length || origensFrontend.some(origem => {
 }) || (process.env.NODE_ENV === "production" && !process.env.CORS_ORIGINS)) throw new Error("Configure CORS_ORIGINS com origens HTTP(S) explícitas, sem curinga.");
 app.use(cors({ origin: origensFrontend, credentials: true, allowedHeaders: ["Content-Type", "X-MeuSaldo-Request"], methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] }));
 app.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
+app.get("/health", (_req, res) => { res.json({ ok: true }); });
 app.use(["/receitas", "/despesas", "/saldo", "/contas", "/orcamentos"], exigirSessao);
 app.use(protegerCsrf(origensFrontend));
 app.use(express.json({ limit: "16kb" }));
