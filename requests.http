@@ -204,6 +204,23 @@ X-MeuSaldo-Request: 1
 DELETE {{url}}/contas/{{contaId}}
 X-MeuSaldo-Request: 1
 
+### ---------- ORÇAMENTOS ----------
+
+### Limites do mês com o gasto de cada categoria (200)
+GET {{url}}/orcamentos?mes=2026-12
+
+### Substituir os limites do mês (200); lista vazia remove todos
+PUT {{url}}/orcamentos?mes=2026-12
+Content-Type: application/json
+X-MeuSaldo-Request: 1
+
+{
+  "categorias": [
+    { "categoria": "Moradia", "limite": 2600 },
+    { "categoria": "Lazer", "limite": 400 }
+  ]
+}
+
 ### ---------- ROTA INEXISTENTE ----------
 
 ### 404 de rota

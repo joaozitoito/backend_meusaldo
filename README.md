@@ -114,6 +114,7 @@ inexistente. usuarioId/userId do cliente não autorizam nem reatribuem registros
 | GET, POST | /contas | 200 (vencimento e id crescentes); 201 |
 | GET, PUT, DELETE | /contas/:id | 200; 200; 204 |
 | POST | /contas/:id/pagar | 200 `{ conta, despesa }`; 409 se já paga |
+| GET, PUT | /orcamentos?mes=YYYY-MM | 200 `{ mes, limite, gasto, categorias: [{ categoria, limite, gasto }] }` |
 
 GET das listagens aceita `?categoria=` para correspondência exata. Listagens e
 `GET /saldo` aceitam `?mes=YYYY-MM` (dias civis UTC do mês; formato inválido retorna 400
@@ -123,6 +124,10 @@ com `campos.mes`). `GET /saldo/mensal` aceita `?meses=` (1 a 24, padrão 12) e
 pelo vencimento. Conta usa o mesmo JSON do lançamento com `vencimento` no lugar de `data`;
 `pagaEm` é `null` enquanto aberta. Pagar marca `pagaEm` e cria, na mesma transação, uma
 Despesa com descrição, valor e categoria da conta e data igual ao dia UTC do pagamento.
+`/orcamentos` exige `?mes=YYYY-MM`. O PUT recebe `{ "categorias": [{ "categoria": "Moradia", "limite": 2600 }] }`
+e substitui todos os limites do mês (lista vazia remove todos). `gasto` é a soma das despesas do
+mês na categoria (correspondência exata), calculada no banco; `limite` e `gasto` do topo somam só
+as categorias com limite.
 JSON de POST/PUT:
 
 ```json

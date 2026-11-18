@@ -145,3 +145,36 @@ test('contas: CRUD, filtros por status/mês/até, pagar cria despesa e pagar de 
   assert.equal((await de(`/contas/${ids.Seguro}`, 'DELETE')).status, 204);
   assert.equal((await de(`/contas/${ids.Seguro}`)).status, 404);
 });
+
+test('orçamentos: PUT substitui os limites do mês, GET soma o gasto no banco e isola usuários', async () => {
+  const conta = await criarConta(base, usuarios);
+  const outra = await criarConta(base, usuarios);
+  const de = (caminho, method = 'GET', dados) => chamarAutenticado(base, caminho, { method, dados, cookie: conta.cookie });
+  for (const [valor, categoria, data] of [[0.1, 'Moradia', '2026-12-01'], [0.2, 'Moradia', '2026-12-31'], [50, 'Lazer', '2026-12-10'], [999, 'Moradia', '2027-01-01'], [7, 'Outros', '2026-12-02']]) {
+    assert.equal((await de('/despesas', 'POST', { descricao: 'Gasto', valor, categoria, data })).status, 201);
+  }
+  assert.deepEqual((await de('/orcamentos?mes=2026-12')).dados, { mes: '2026-12', limite: 0, gasto: 0, categorias: [] });
+  const salvo = await de('/orcamentos?mes=2026-12', 'PUT', { categorias: [{ categoria: 'Lazer', limite: 40 }, { categoria: 'Moradia', limite: 2600.5 }], usuarioId: outra.id });
+  assert.equal(salvo.status, 200);
+  assert.deepEqual(salvo.dados, { mes: '2026-12', limite: 2640.5, gasto: 50.3, categorias: [
+    { categoria: 'Moradia', limite: 2600.5, gasto: 0.3 },
+    { categoria: 'Lazer', limite: 40, gasto: 50 },
+  ] });
+  assert.deepEqual((await de('/orcamentos?mes=2026-12')).dados, salvo.dados);
+  assert.equal((await de('/orcamentos?mes=2027-01')).dados.categorias.length, 0);
+
+  // Substitui: Lazer sai, Moradia muda.
+  const trocado = await de('/orcamentos?mes=2026-12', 'PUT', { categorias: [{ categoria: 'Moradia', limite: 100 }] });
+  assert.deepEqual(trocado.dados.categorias, [{ categoria: 'Moradia', limite: 100, gasto: 0.3 }]);
+  const invalido = await de('/orcamentos?mes=2026-12', 'PUT', { categorias: [{ categoria: 'Moradia', limite: -1 }] });
+  assert.equal(invalido.status, 400);
+  assert.ok(invalido.dados.campos['categorias.0.limite']);
+  assert.equal((await de('/orcamentos?mes=2026-12')).dados.limite, 100);
+  for (const consulta of ['', '?mes=2026-13', '?mes=dez']) {
+    assert.equal((await de(`/orcamentos${consulta}`)).status, 400, consulta);
+    assert.equal((await de(`/orcamentos${consulta}`, 'PUT', { categorias: [] })).status, 400, consulta);
+  }
+
+  assert.deepEqual((await chamarAutenticado(base, '/orcamentos?mes=2026-12', { cookie: outra.cookie })).dados.categorias, []);
+  assert.equal((await de('/orcamentos?mes=2026-12', 'PUT', { categorias: [] })).dados.categorias.length, 0);
+});

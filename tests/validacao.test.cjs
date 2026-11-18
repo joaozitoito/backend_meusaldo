@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { validarLancamento, validarId, lerMes, lerDia, validarConta } = require('../dist/validacao');
+const { validarLancamento, validarId, lerMes, lerDia, validarConta, validarOrcamentos } = require('../dist/validacao');
 
 const valido = { descricao: 'Pagamento', valor: 1.1, categoria: 'Trabalho', data: '2026-10-21' };
 
@@ -62,4 +62,14 @@ test('conta usa as regras do lançamento com vencimento no lugar de data', () =>
   assert.equal(lerDia(undefined), undefined);
   assert.equal(lerDia('2026-13-01'), null);
   assert.equal(lerDia('2026-12-31').toISOString(), '2026-12-31T00:00:00.000Z');
+});
+
+test('validarOrcamentos: normaliza, recusa repetidas, limites inválidos e corpo sem lista', () => {
+  assert.deepEqual(validarOrcamentos({ categorias: [{ categoria: ' Moradia ', limite: 2600 }, { categoria: 'Lazer', limite: 0.5 }] }), {
+    ok: true, dados: [{ categoria: 'Moradia', limite: 2600 }, { categoria: 'Lazer', limite: 0.5 }],
+  });
+  assert.deepEqual(validarOrcamentos({ categorias: [] }), { ok: true, dados: [] });
+  const invalido = validarOrcamentos({ categorias: [{ categoria: 'Lazer', limite: 0 }, { categoria: 'lazer', limite: 1.001 }, null] });
+  assert.deepEqual(Object.keys(invalido.campos).sort(), ['categorias.0.limite', 'categorias.1.categoria', 'categorias.1.limite', 'categorias.2.categoria', 'categorias.2.limite']);
+  for (const corpo of [null, {}, { categorias: 'x' }, { categorias: Array(51).fill({ categoria: 'A', limite: 1 }) }]) assert.ok(validarOrcamentos(corpo).campos.categorias);
 });
