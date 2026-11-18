@@ -2,6 +2,7 @@
 @url = http://localhost:3001
 @receitaId = 1
 @despesaId = 1
+@contaId = 1
 
 ### Defina REST_CLIENT_EMAIL e REST_CLIENT_SENHA apenas no .env local ignorado.
 ### Mantenha o cookie jar do REST Client habilitado; execute login antes do CRUD.
@@ -174,6 +175,34 @@ GET {{url}}/saldo/mensal?meses=12&ate=2026-10
 
 ### Mês inválido (400)
 GET {{url}}/saldo?mes=2026-13
+
+### ---------- CONTAS A PAGAR ----------
+
+### Cadastrar conta (201)
+POST {{url}}/contas
+Content-Type: application/json
+X-MeuSaldo-Request: 1
+
+{
+  "descricao": "Aluguel",
+  "valor": 1700,
+  "categoria": "Moradia",
+  "vencimento": "2026-12-05"
+}
+
+### Contas em aberto do mês (200)
+GET {{url}}/contas?status=aberta&mes=2026-12
+
+### Contas que vencem até uma data (200)
+GET {{url}}/contas?status=aberta&ate=2026-12-07
+
+### Pagar conta: cria a despesa (200); repetir retorna 409
+POST {{url}}/contas/{{contaId}}/pagar
+X-MeuSaldo-Request: 1
+
+### Excluir conta (204)
+DELETE {{url}}/contas/{{contaId}}
+X-MeuSaldo-Request: 1
 
 ### ---------- ROTA INEXISTENTE ----------
 

@@ -95,3 +95,53 @@ test('CORS permite frontend e recusa origem desconhecida; JSON inválido retorna
   const resposta = await fetch(base + '/receitas', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-MeuSaldo-Request': '1', Cookie: usuario.cookie }, body: '{' });
   assert.equal(resposta.status, 400);
 });
+
+test('contas: CRUD, filtros por status/mês/até, pagar cria despesa e pagar de novo é 409', async () => {
+  const conta = await criarConta(base, usuarios);
+  const outra = await criarConta(base, usuarios);
+  const pedir = (cookie, caminho, method = 'GET', dados) => chamarAutenticado(base, caminho, { method, dados, cookie });
+  const de = (caminho, method, dados) => pedir(conta.cookie, caminho, method, dados);
+  const ids = {};
+  for (const [nome, valor, vencimento] of [['Aluguel', 1700, '2026-12-05'], ['Internet', 99.9, '2026-12-15'], ['Seguro', 300, '2027-01-10']]) {
+    const criada = await de('/contas', 'POST', { descricao: nome, valor, categoria: 'Moradia', vencimento, usuarioId: outra.id });
+    assert.equal(criada.status, 201);
+    assert.equal(criada.dados.pagaEm, null);
+    assert.equal(criada.dados.valor, valor);
+    ids[nome] = criada.dados.id;
+  }
+  const invalida = await de('/contas', 'POST', { descricao: 'ab', valor: 1, categoria: 'X', vencimento: '2026-02-30' });
+  assert.equal(invalida.status, 400);
+  assert.ok(invalida.dados.campos.vencimento);
+  assert.deepEqual((await de('/contas')).dados.map(item => item.descricao), ['Aluguel', 'Internet', 'Seguro']);
+  assert.deepEqual((await de('/contas?mes=2026-12')).dados.map(item => item.descricao), ['Aluguel', 'Internet']);
+  assert.deepEqual((await de('/contas?ate=2026-12-05')).dados.map(item => item.descricao), ['Aluguel']);
+  for (const consulta of ['status=todas', 'mes=2026-13', 'ate=2026-02-30']) assert.equal((await de(`/contas?${consulta}`)).status, 400, consulta);
+
+  assert.equal((await de(`/contas/${ids.Internet}`, 'PUT', { descricao: 'Internet fibra', valor: 120, categoria: 'Moradia', vencimento: '2026-12-16' })).dados.valor, 120);
+  assert.equal((await de(`/contas/${ids.Internet}`)).dados.descricao, 'Internet fibra');
+
+  const despesasAntes = (await de('/despesas')).dados.length;
+  const paga = await de(`/contas/${ids.Aluguel}/pagar`, 'POST');
+  assert.equal(paga.status, 200);
+  assert.ok(paga.dados.conta.pagaEm);
+  assert.deepEqual(
+    { descricao: paga.dados.despesa.descricao, valor: paga.dados.despesa.valor, categoria: paga.dados.despesa.categoria, data: paga.dados.despesa.data.slice(0, 10) },
+    { descricao: 'Aluguel', valor: 1700, categoria: 'Moradia', data: paga.dados.conta.pagaEm.slice(0, 10) },
+  );
+  assert.equal((await de(`/contas/${ids.Aluguel}/pagar`, 'POST')).status, 409);
+  assert.equal((await de('/despesas')).dados.length, despesasAntes + 1);
+  assert.deepEqual((await de('/contas?status=paga')).dados.map(item => item.id), [ids.Aluguel]);
+  assert.deepEqual((await de('/contas?status=aberta&mes=2026-12')).dados.map(item => item.id), [ids.Internet]);
+
+  // Isolamento: a outra pessoa não vê, não altera, não paga e não exclui; usuarioId forjado foi ignorado.
+  assert.deepEqual((await pedir(outra.cookie, '/contas')).dados, []);
+  for (const [method, caminho, dados] of [['GET', `/contas/${ids.Seguro}`], ['PUT', `/contas/${ids.Seguro}`, { descricao: 'Invasão', valor: 1, categoria: 'X', vencimento: '2026-12-01' }], ['POST', `/contas/${ids.Seguro}/pagar`], ['DELETE', `/contas/${ids.Seguro}`]]) {
+    assert.equal((await pedir(outra.cookie, caminho, method, dados)).status, 404, `${method} ${caminho}`);
+  }
+  assert.equal((await pedir(outra.cookie, '/despesas')).dados.length, 0);
+  assert.equal((await de('/contas/999999999/pagar', 'POST')).status, 404);
+  assert.equal((await de('/contas/abc/pagar', 'POST')).status, 400);
+
+  assert.equal((await de(`/contas/${ids.Seguro}`, 'DELETE')).status, 204);
+  assert.equal((await de(`/contas/${ids.Seguro}`)).status, 404);
+});
