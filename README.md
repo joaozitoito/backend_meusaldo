@@ -111,11 +111,18 @@ inexistente. usuarioId/userId do cliente não autorizam nem reatribuem registros
 | DELETE | /receitas/:id, /despesas/:id | 204, sem corpo |
 | GET | /saldo | 200 |
 | GET | /saldo/mensal | 200; `[{ mes, receitas, despesas, saldo, saldoAcumulado }]` do mais antigo ao mais novo |
+| GET, POST | /contas | 200 (vencimento e id crescentes); 201 |
+| GET, PUT, DELETE | /contas/:id | 200; 200; 204 |
+| POST | /contas/:id/pagar | 200 `{ conta, despesa }`; 409 se já paga |
 
 GET das listagens aceita `?categoria=` para correspondência exata. Listagens e
 `GET /saldo` aceitam `?mes=YYYY-MM` (dias civis UTC do mês; formato inválido retorna 400
 com `campos.mes`). `GET /saldo/mensal` aceita `?meses=` (1 a 24, padrão 12) e
 `?ate=YYYY-MM` (padrão: mês UTC atual); `saldoAcumulado` inclui tudo até o fim de cada mês.
+`GET /contas` aceita `?status=aberta|paga`, `?mes=YYYY-MM` e `?ate=YYYY-MM-DD` (inclusivo), todos
+pelo vencimento. Conta usa o mesmo JSON do lançamento com `vencimento` no lugar de `data`;
+`pagaEm` é `null` enquanto aberta. Pagar marca `pagaEm` e cria, na mesma transação, uma
+Despesa com descrição, valor e categoria da conta e data igual ao dia UTC do pagamento.
 JSON de POST/PUT:
 
 ```json

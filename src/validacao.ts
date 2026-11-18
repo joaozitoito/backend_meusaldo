@@ -46,9 +46,8 @@ export function validarLancamento(body: unknown): Resultado {
     campos.categoria = "A categoria deve ter no máximo 60 caracteres.";
   }
 
-  const dia = typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data) && !data.startsWith("0000-")
-    ? new Date(`${data}T00:00:00.000Z`) : new Date(NaN);
-  if (Number.isNaN(dia.getTime()) || dia.toISOString().slice(0, 10) !== data) {
+  const dia = lerDia(data);
+  if (!dia) {
     campos.data = "A data e obrigatoria e deve estar no formato YYYY-MM-DD.";
   }
 
@@ -62,9 +61,29 @@ export function validarLancamento(body: unknown): Resultado {
       descricao: (descricao as string).trim(),
       valor: valor as number,
       categoria: (categoria as string).trim(),
-      data: dia,
+      data: dia as Date,
     },
   };
+}
+
+/** Dia civil YYYY-MM-DD em meia-noite UTC. Retorna undefined quando ausente e null quando invalido. */
+export function lerDia(valor: unknown): Date | null | undefined {
+  if (valor === undefined) return undefined;
+  const dia = typeof valor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(valor) && !valor.startsWith("0000-")
+    ? new Date(`${valor}T00:00:00.000Z`) : new Date(NaN);
+  return Number.isNaN(dia.getTime()) || dia.toISOString().slice(0, 10) !== valor ? null : dia;
+}
+
+/** Mesmas regras de validarLancamento, com "vencimento" no lugar de "data". */
+export function validarConta(body: unknown): { ok: true; dados: Omit<Lancamento, "data"> & { vencimento: Date } } | { ok: false; campos: Campos } {
+  const corpo = typeof body === "object" && body !== null && !Array.isArray(body) ? body as Record<string, unknown> : {};
+  const resultado = validarLancamento({ ...corpo, data: corpo.vencimento });
+  if (!resultado.ok) {
+    const { data, ...campos } = resultado.campos;
+    return { ok: false, campos: data ? { ...campos, vencimento: "O vencimento e obrigatorio e deve estar no formato YYYY-MM-DD." } : campos };
+  }
+  const { data, ...dados } = resultado.dados;
+  return { ok: true, dados: { ...dados, vencimento: data } };
 }
 
 export const ERRO_MES = { erro: "Dados invalidos.", campos: { mes: "Use o mes no formato YYYY-MM." } };

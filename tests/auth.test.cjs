@@ -14,12 +14,13 @@ before(async () => {
 after(() => limpar(servidor, usuarios));
 
 test('todas as rotas financeiras recusam acesso anônimo com 401 e no-store', async () => {
-  for (const tipo of ['receitas','despesas']) for (const [method, rota] of [['GET',`/${tipo}`],['POST',`/${tipo}`],['GET',`/${tipo}/1`],['PUT',`/${tipo}/1`],['DELETE',`/${tipo}/1`]]) {
+  for (const tipo of ['receitas','despesas','contas']) for (const [method, rota] of [['GET',`/${tipo}`],['POST',`/${tipo}`],['GET',`/${tipo}/1`],['PUT',`/${tipo}/1`],['DELETE',`/${tipo}/1`]]) {
     const r = await chamar(base, rota, { method, dados: ['POST','PUT'].includes(method) ? payload : undefined, csrf:false });
     assert.equal(r.status, 401);
     assert.equal(r.headers.get('cache-control'), 'no-store');
   }
   assert.equal((await chamar(base,'/saldo')).status,401);
+  assert.equal((await chamar(base,'/contas/1/pagar',{method:'POST',csrf:false})).status,401);
   assert.equal((await chamar(base,'/auth/me')).status,401);
 });
 
