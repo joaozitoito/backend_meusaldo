@@ -62,7 +62,8 @@ padrão `http://localhost:3000`. Se usar 127.0.0.1 no navegador, adicione essa o
 Não há curinga de CORS. O frontend usa `NEXT_PUBLIC_API_URL=http://localhost:3001`.
 Cookies exigem `credentials: include`. Use o mesmo host para ambos os serviços
 locais (localhost nas duas URLs). Produção exige HTTPS, NODE_ENV=production e
-CORS_ORIGINS explícito; a implantação não faz parte desta fase.
+CORS_ORIGINS explícito. O deploy em VPS (Caddy com HTTPS, API em `/api`) está no
+[README do frontend](https://github.com/joaozitoito/controle_financeiro#deploy-em-vps).
 
 O ambiente local já preparado durante as fases usa um PostgreSQL Docker dedicado, container
 `meusaldo-fase2-postgres`, volume `meusaldo-fase2-data`, porta local 5437 e bases
@@ -217,7 +218,10 @@ origens explícitas segue a orientação de
 [OWASP CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
 Erro CSRF é 403. Respostas usam Cache-Control: no-store; JSON é limitado a 16 KiB.
 Não há tokens em localStorage, hashes nas respostas ou credenciais em logs.
-O Express não confia em X-Forwarded-For (`trust proxy=false`).
+Por padrão o Express não confia em X-Forwarded-For (`trust proxy=false`). Atrás de um
+único proxy reverso (Caddy na VPS), `TRUST_PROXY=1` faz `req.ip` ser o do visitante, para
+o limite de tentativas valer por pessoa e não para todos juntos. Não ative sem proxy:
+qualquer cliente poderia forjar o próprio IP pelo cabeçalho.
 
 ## Seed
 

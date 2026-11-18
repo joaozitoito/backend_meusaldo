@@ -15,7 +15,9 @@ import { avisarAlteracao, conectarEventos } from "./tempo-real";
 
 export const app = express();
 app.disable("x-powered-by");
-app.set("trust proxy", false);
+// Atrás de um proxy (Caddy na VPS), TRUST_PROXY=1 faz req.ip ser o do visitante; sem isso
+// o limite de tentativas valeria para todos juntos. Sem proxy, X-Forwarded-For é ignorado.
+app.set("trust proxy", process.env.TRUST_PROXY === "1" ? 1 : false);
 
 // Apenas as origens explícitas do frontend podem acessar a API pelo navegador.
 const origensFrontend = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
