@@ -1,5 +1,5 @@
 # Base: Node 24 LTS + openssl, que o Prisma exige na imagem slim.
-FROM node:24-slim AS base
+FROM node:24.22.3-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV HOST=0.0.0.0
