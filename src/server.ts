@@ -7,7 +7,8 @@ const PORTA = Number(process.env.PORT ?? 3001);
 async function iniciar() {
   await prisma.$connect();
 
-  app.listen(PORTA, "127.0.0.1", () => {
+  // Local fica em 127.0.0.1; no container o Dockerfile define HOST=0.0.0.0.
+  app.listen(PORTA, process.env.HOST ?? "127.0.0.1", () => {
     console.log(`API rodando em http://localhost:${PORTA}`);
   });
 }

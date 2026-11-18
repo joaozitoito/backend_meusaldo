@@ -45,7 +45,8 @@ npm run dev
 
 Não sobrescreva um .env existente. `npm run build` compila TypeScript;
 `npm start` executa o código compilado. O servidor conecta ao banco antes de
-escutar e fica em 127.0.0.1. Falha de conexão encerra a inicialização com mensagem
+escutar e fica em 127.0.0.1 (o Dockerfile define `HOST=0.0.0.0` dentro do container;
+`GET /health` responde `{ "ok": true }` para o healthcheck). Falha de conexão encerra a inicialização com mensagem
 de diagnóstico sem imprimir a URL/credenciais.
 O lockfile acompanha o projeto: use npm ci para reproduzir as dependências.
 `npm run prisma:generate` é explícito para instalações que não executam scripts
@@ -68,6 +69,10 @@ O ambiente local já preparado durante as fases usa um PostgreSQL Docker dedicad
 `meusaldo_dev` e `meusaldo_test`. Esses recursos e arquivos privados não são
 distribuídos pelo Git; um clone limpo usa o preparo acima. Para retomar somente esse ambiente existente:
 `docker start meusaldo-fase2-postgres`; depois iniciar API e frontend.
+
+Para rodar API, frontend e banco em containers, use o `Dockerfile` deste repositório
+pelo Compose do frontend: veja
+[Rodando com Docker](https://github.com/joaozitoito/controle_financeiro#rodando-com-docker).
 
 ## Migrações e bancos existentes
 
